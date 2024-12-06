@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, time
+
 from repositories.PedidoRepository import PedidoRepository
 from repositories.UsuarioRepository import UsuarioRepository
 from models.Pedido import Pedido
@@ -105,3 +107,116 @@ class PedidoService:
     #         pedidos.append(pedido)
     #
     #     return pedidos
+
+    from datetime import datetime, timedelta, time
+    from repositories.PedidoRepository import PedidoRepository
+
+
+    @staticmethod
+    def get_quantidade_pedido(dias):
+        today = datetime.now().date()
+        start_date = today - timedelta(days=dias)
+        return PedidoRepository.count_pedido_by_data_pedido_between(start_date, today)
+
+    @staticmethod
+    def count_pedidos():
+        return PedidoRepository.count()
+
+    @staticmethod
+    def find_avg_pedidos_por_usuario():
+        return PedidoRepository.find_average_pedidos_per_usuario()
+
+    @staticmethod
+    def contar_pedidos_por_forma_pagamento():
+        resultados = PedidoRepository.count_pedidos_by_forma_pagamento()
+
+        def process_row(row):
+            forma_pagamento = row[0].value if row[0] is not None else None
+            return {
+                "formaPagamento": forma_pagamento,
+                "quantidade": row[1] if row[1] is not None else 0
+            }
+
+        return [process_row(row) for row in resultados]
+
+    @staticmethod
+    def contar_horarios_por_intervalo(data):
+        horarios = PedidoRepository.find_horarios_by_data(data)
+        contagem_por_hora = {}
+
+        for horario in horarios:
+            # Verifica se o tipo é timedelta e converte para time
+            if isinstance(horario, timedelta):  # Corrige o uso de timedelta
+                total_seconds = int(horario.total_seconds())
+                horas = total_seconds // 3600
+                minutos = (total_seconds % 3600) // 60
+                horario = time(horas, minutos)
+
+            # Arredonda para o início da hora (desconsidera minutos e segundos)
+            hora_inicio = horario.replace(minute=0, second=0, microsecond=0)
+            contagem_por_hora[hora_inicio] = contagem_por_hora.get(hora_inicio, 0) + 1
+
+        # Retorna o resultado no formato desejado
+        return [{"hora": hora.strftime("%H:%M"), "quantidade": quantidade} for hora, quantidade in
+                contagem_por_hora.items()]
+
+    @staticmethod
+    def contar_horarios_por_intervalo_global():
+        horarios = PedidoRepository.find_all_horarios()
+        contagem_por_hora = {}
+
+        for horario in horarios:
+            # Verifica se o tipo é timedelta e converte para time
+            if isinstance(horario, timedelta):  # Corrige o uso de timedelta
+                total_seconds = int(horario.total_seconds())
+                horas = total_seconds // 3600
+                minutos = (total_seconds % 3600) // 60
+                horario = time(horas, minutos)
+
+            # Arredonda para o início da hora (desconsidera minutos e segundos)
+            hora_inicio = horario.replace(minute=0, second=0, microsecond=0)
+            contagem_por_hora[hora_inicio] = contagem_por_hora.get(hora_inicio, 0) + 1
+
+        # Retorna o resultado no formato desejado
+        return [{"hora": hora.strftime("%H:%M"), "quantidade": quantidade} for hora, quantidade in
+                contagem_por_hora.items()]
+
+    @staticmethod
+    def contar_pedidos_por_intervalo_de_valores():
+        """
+        Conta os pedidos por intervalo de valores e retorna uma lista formatada.
+        """
+        resultados = PedidoRepository.count_pedidos_por_intervalo_de_valores()
+
+        intervalo_formatado = []
+        for resultado in resultados:
+            intervalo = resultado[0]  # O intervalo retornado do banco, como "0-50" ou ">251"
+            quantidade = int(resultado[1])  # Quantidade de pedidos no intervalo
+
+            # Converte o intervalo para uma lista de inteiros
+            if intervalo == ">251":
+                range_intervalo = [251]  # Apenas um elemento para ">251"
+            else:
+                limites = intervalo.split("-")  # Divide o intervalo em limites
+                range_intervalo = [int(limites[0]), int(limites[1])]  # Converte limites para inteiros
+
+            intervalo_formatado.append({
+                "intervalo": range_intervalo,
+                "quantidade": quantidade
+            })
+
+        return intervalo_formatado
+
+    @staticmethod
+    def calcular_valor_medio_pedidos():
+        valor_medio = PedidoRepository.calcular_valor_medio_pedidos()
+        return valor_medio if valor_medio is not None else 0
+
+    @staticmethod
+    def buscar_pedido_de_maior_valor():
+        return PedidoRepository.buscar_pedido_de_maior_valor()
+
+    @staticmethod
+    def get_all_pedidos(page, per_page):
+        return PedidoRepository.find_all_paginated(page, per_page)
+

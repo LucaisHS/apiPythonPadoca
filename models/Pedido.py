@@ -1,9 +1,10 @@
 from uuid import uuid4, UUID
 from sqlalchemy.dialects.mysql import BINARY
-from sqlalchemy import Column, String, Date, ForeignKey, Numeric, Enum
+from sqlalchemy import Column, String, Date, ForeignKey, Numeric, Enum, Time
 from sqlalchemy.orm import relationship
 from db.db import db
 import enum
+
 
 class PedidoEstado(enum.Enum):
     PENDENTE = "PENDENTE"
@@ -12,6 +13,14 @@ class PedidoEstado(enum.Enum):
     ENTREGUE = "ENTREGUE"
     PREPARANDO_PEDIDO = "PREPARANDO_PEDIDO"
     SAINDO_ENTREGA = "SAINDO_ENTREGA"
+
+
+class FormaPagamento(enum.Enum):
+    DEBITO = "DEBITO"
+    CREDITO = "CREDITO"
+    PIX = "PIX"
+    DINHEIRO = "DINHEIRO"
+
 
 class Pedido(db.Model):
     __tablename__ = 'pedido'
@@ -26,7 +35,10 @@ class Pedido(db.Model):
     usuario_id = db.Column(db.String(36), db.ForeignKey('usuario.usuario_id'))
 
     produtos_pedido = relationship('ProdutoPedido', back_populates='pedido', lazy=True)
-    #usuario = relationship('Usuario', backref='pedidos')
+
+    forma_pagamento = Column(Enum(FormaPagamento), nullable=False)
+    horario_pedido = Column(Time, nullable=False)
+    horario_entrega = Column(Time, nullable=False)
 
     def __init__(self, **kwargs):
         """
@@ -37,9 +49,12 @@ class Pedido(db.Model):
 
     def to_dict(self):
         return {
-            'pedido_id': str(UUID(bytes=self.pedido_id)),  # Converte bytes para UUID
-            'data_pedido': self.data_pedido.strftime('%d/%m/%Y'),
-            'valor_total': float(self.valor_total),  # Converte Decimal para float
-            'pedido_estado': self.pedido_estado.value,  # Enum como string
+            'pedidoId': str(UUID(bytes=self.pedido_id)),  # Converte bytes para UUID
+            'dataPedido': self.data_pedido.strftime('%d/%m/%Y'),
+            'valorTotal': float(self.valor_total),  # Converte Decimal para float
+            'pedidoEstado': self.pedido_estado.value,  # Enum como string
             'usuario_id': str(UUID(bytes=self.usuario_id)),  # Converte bytes para UUID
+            'formaPagamento': self.forma_pagamento.name if self.forma_pagamento else None,
+            'horarioPedido': self.horario_pedido.strftime('%H:%M:%S') if self.horario_pedido else None,
+            'horarioEntrega': self.horario_entrega.strftime('%H:%M:%S') if self.horario_entrega else None,
         }

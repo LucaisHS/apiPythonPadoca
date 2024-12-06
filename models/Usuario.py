@@ -9,7 +9,7 @@ from models.Pedido import Pedido
 class Usuario(db.Model):
     __tablename__ = 'usuario'
 
-    usuario_id = Column(BINARY(16), primary_key=True, default=uuid4)
+    usuario_id = Column(BINARY(16), primary_key=True, default=lambda: uuid4().bytes)
     nome = Column(String(50))
     sobrenome = Column(String(50))
     senha = Column(String(255))
@@ -24,7 +24,7 @@ class Usuario(db.Model):
 
     def to_dict(self):
         return {
-            'usuario_id': str(UUID(bytes=self.usuario_id)),  # Converte bytes para UUID
+            'usuario_id': str(UUID(bytes=self.usuario_id)) if self.usuario_id else None,
             'nome': self.nome,
             'sobrenome': self.sobrenome,
             'telefone': self.telefone,

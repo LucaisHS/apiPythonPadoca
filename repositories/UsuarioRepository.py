@@ -1,6 +1,8 @@
 import datetime
 from sqlalchemy import text
 from db.db import db
+from models.Usuario import Usuario
+
 
 class UsuarioRepository:
 
@@ -18,6 +20,11 @@ class UsuarioRepository:
         db.session.commit()
 
     @staticmethod
+    def save_all(usuarios):
+        db.session.add_all(usuarios)
+        db.session.commit()
+
+    @staticmethod
     def delete(usuario):
         db.session.delete(usuario)
         db.session.commit()
@@ -32,3 +39,15 @@ class UsuarioRepository:
         # Usa `mappings()` para retornar os resultados como dicionários
         result = db.session.execute(query, {"startDate": start_date, "endDate": end_date}).mappings()
         return [row["data_nascimento"] for row in result]
+
+    @staticmethod
+    def find_data_cadastro_between(start_date, end_date):
+        query = text("""
+                SELECT data_cadastro 
+                FROM usuario 
+                WHERE data_cadastro BETWEEN :startDate AND :endDate
+            """)
+        result = db.session.execute(query, {"startDate": start_date, "endDate": end_date})
+
+        # Acessar os valores corretamente
+        return [row[0] for row in result]

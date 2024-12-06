@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 from typing import List
 
+from builders.UsuarioBuilder import UsuarioBuilder
 from repositories.UsuarioRepository import UsuarioRepository
-from models import Usuario
+from models.Usuario import Usuario
 from schemas.DateFormatterDTO import DateFormatterDTO
 
 
@@ -45,3 +46,24 @@ class UsuarioService:
 
         # Retorna o DTO com os resultados
         return DateFormatterDTO(idade[0], idade[1], len(dates_list))
+
+    @staticmethod
+    def createManyUsuarios(qntd):
+        novos_usuarios = []
+        usuario_builder = UsuarioBuilder()
+        for _ in range(qntd):
+            usuario = usuario_builder.build_usuario()
+            novos_usuarios.append(usuario)
+        UsuarioRepository.save_all(novos_usuarios)  # Salva todos os usuários de uma vez
+        return novos_usuarios
+
+    @staticmethod
+    def get_new_users_between(dias):
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=dias)
+
+        datas = UsuarioRepository.find_data_cadastro_between(start_date, end_date)
+        return len(datas)
+
+
+
